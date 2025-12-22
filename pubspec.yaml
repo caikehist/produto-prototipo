@@ -1,0 +1,59 @@
+name: patrimonio_narrativo
+description: "Aplicativo para Gestão de Missões Exploratórias sobre Educação Patrimonial."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '^3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Gerenciamento de Estado
+  provider: ^6.1.1
+
+  # Banco de Dados Local (Drift/SQLite)
+  drift: ^2.14.1
+  sqlite3_flutter_libs: ^0.5.18
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
+  # Captura de Mídia
+  image_picker: ^1.0.7
+  record: ^6.1.2
+  file_picker: ^10.3.8
+
+  # Reprodução de Mídia
+  audioplayers: ^6.5.1
+  video_player: ^2.8.2
+
+  # Localização (GPS)
+  geolocator: ^14.0.2
+
+  # Ícones adicionais (opcional)
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # Geradores de Código (Essenciais para o Drift)
+  drift_dev: ^2.14.1
+  build_runner: ^2.4.7
+
+  # Lints para boas práticas
+  flutter_lints: ^6.0.0
+
+  first: any
+flutter:
+  uses-material-design: true
+
+  # Caso você adicione imagens ou fontes no futuro, registre-as aqui:
+  # assets:
+  #   - assets/images/
+
+#dependency_overrides:
+#  record_platform_interface: 1.1.0
+#  record_linux: 0.5.2
