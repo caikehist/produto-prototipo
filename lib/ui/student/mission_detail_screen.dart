@@ -106,8 +106,9 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
         }
       }
 
-      if (!serviceEnabled)
+      if (!serviceEnabled) {
         return null; // Se após 30s ainda estiver off, desiste
+      }
     }
 
     // Verificação de Permissões
@@ -144,9 +145,9 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
   Future<void> _captureMedia(String type) async {
     XFile? file;
     try {
-      if (type == 'PHOTO')
+      if (type == 'PHOTO') {
         file = await _picker.pickImage(source: ImageSource.camera);
-      else if (type == 'VIDEO')
+      } else if (type == 'VIDEO')
         file = await _picker.pickVideo(source: ImageSource.camera);
       if (file != null) {
         Position? pos = await _getLocation();
@@ -195,7 +196,6 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
     String type,
     Position? pos,
   ) async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
     final authorCtrl = TextEditingController();
@@ -203,7 +203,8 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
     final lngCtrl = TextEditingController(
       text: pos?.longitude.toString() ?? "",
     );
-    DateTime  originalDate;
+    DateTime registrationDate = DateTime.now();
+    DateTime? originalDate;
 
     showDialog(
       context: context,
@@ -234,17 +235,21 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                 Row(
                   children: [
                     const Text("Data da Obra: "),
-                    TextButton( sync {
+                    TextButton(
+                      onPressed: () async {
                         final d = await showDatePicker(
                           context: context,
                           initialDate: originalDate ?? DateTime.now(),
                           firstDate: DateTime(1800),
-                          lastDate: Da 
+                          lastDate: DateTime.now(),
+                        );
                         if (d != null) setModalState(() => originalDate = d);
                       },
-                      child: Text(originalDate == null
-                          ? "Selecionar (opcional)"
-                          : "${originalDate!.day}/${originalDate!.month}/${originalDate!.year}"),
+                      child: Text(
+                        originalDate == null
+                            ? "Selecionar (opcional)"
+                            : "${originalDate!.day}/${originalDate!.month}/${originalDate!.year}",
+                      ),
                     ),
                   ],
                 ),
@@ -259,13 +264,16 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                           firstDate: DateTime(2000),
                           lastDate: DateTime.now(),
                         );
-                        if (d != null)
+                        if (d != null) {
                           setModalState(() => registrationDate = d);
+                        }
                       },
-                      child: Text(nDate.day}/${registrationDate.month}/${registrationDate.year}",
+                      child: Text(
+                        "${registrationDate.day}/${registrationDate.month}/${registrationDate.year}",
                       ),
                     ),
                   ],
+                ),
                 const Divider(),
                 const Text(
                   "Coordenadas GPS",
@@ -314,7 +322,8 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                   originalDate,
                   double.tryParse(latCtrl.text),
                   double.tryParse(lngCtrl.text),
-                );pcontext);
+                );
+                if (context.mounted) Navigator.pop(context);
               },
               child: const Text("Salvar"),
             ),
@@ -336,7 +345,8 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
     double? lng,
   ) async {
     final db = Provider.of<AppDatabase>(context, listen: false);
-    final autectory = await getApplicationDocumentsDirectory();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final directory = await getApplicationDocumentsDirectory();
     final savedPath = p.join(
       directory.path,
       '${type.toLowerCase()}_${DateTime.now().millisecondsSinceEpoch}${p.extension(tempPath)}',
@@ -362,22 +372,23 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
           );
     } catch (e) {
       debugPrint("Erro: $e");
+    }
   }
 
   // --- EXCLUSÃO E PLAY ---
-  Future<void> _delete(Artifact item) async {
+  Future<void> delete(Artifact item) async {
     final db = Provider.of<AppDatabase>(context, listen: false);
     if (await File(item.filePath).exists()) await File(item.filePath).delete();
     await db.deleteArtifact(item.id);
   }
 
-  void _play(Artifact item) {
-    if (item.type == 'PHOTO')
+  void play(Artifact item) {
+    if (item.type == 'PHOTO') {
       showDialog(
         context: context,
         builder: (_) => Dialog(child: Image.file(File(item.filePath))),
       );
-    else if (item.type == 'AUDIO') {
+    } else if (item.type == 'AUDIO') {
       _audioPlayer.stop();
       _audioPlayer.play(DeviceFileSource(item.filePath));
     } else if (item.type == 'VIDEO')
@@ -431,29 +442,36 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
                           item.title,
                           style: const TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Builder(builder: (context) {
-                          final subtitles = <String>[];
-                          if (item.registeredBy.isNotEmpty) {
-                            subtitles.add("Autor Original: ${item.registeredBy}");
-                          }
-                          if (item.originalDate != null) {
-                            subtitles.add(
-                         
-                          return Text(subtitles.join(' | '));
-                        }),
+                        subtitle: Builder(
+                          builder: (context) {
+                            final subtitles = <String>[];
+                            if (item.registeredBy.isNotEmpty) {
+                              subtitles.add(
+                                "Autor Original: ${item.registeredBy}",
+                              );
+                            }
+                            if (item.originalDate != null) {
+                              final d = item.originalDate!;
+                              subtitles.add(
+                                "Data: ${d.day}/${d.month}/${d.year}",
+                              );
+                            }
+                            return Text(subtitles.join(' | '));
+                          },
+                        ),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
                               icon: const Icon(Icons.play_circle_outline),
-                              onPressed: () => _play(item),
+                              onPressed: () => play(item),
                             ),
                             IconButton(
                               icon: const Icon(
                                 Icons.delete_outline,
                                 color: Colors.red,
                               ),
-                              onPressed: () => _delete(item),
+                              onPressed: () => delete(item),
                             ),
                           ],
                         ),
@@ -464,34 +482,34 @@ class _MissionDetailScreenState extends State<MissionDetailScreen> {
               },
             ),
           ),
-          _buildPanel(),
+          buildPanel(),
         ],
       ),
     );
   }
 
-  Widget _buildPanel() {
+  Widget buildPanel() {
     return Container(
       padding: const EdgeInsets.only(top: 10, bottom: 30),
       color: Colors.brown.shade100,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _btn(Icons.camera_alt, "Foto", () => _captureMedia('PHOTO')),
-          _btn(
+          btn(Icons.camera_alt, "Foto", () => _captureMedia('PHOTO')),
+          btn(
             _isRecording ? Icons.stop : Icons.mic,
             _isRecording ? "Parar" : "Áudio",
             _toggleAudioRecording,
             color: _isRecording ? Colors.red : null,
           ),
-          _btn(Icons.videocam, "Vídeo", () => _captureMedia('VIDEO')),
-          _btn(Icons.file_upload, "Arquivo", _pickFile),
+          btn(Icons.videocam, "Vídeo", () => _captureMedia('VIDEO')),
+          btn(Icons.file_upload, "Arquivo", _pickFile),
         ],
       ),
     );
   }
 
-  Widget _btn(IconData icon, String label, VoidCallback onTap, {Color? color}) {
+  Widget btn(IconData icon, String label, VoidCallback onTap, {Color? color}) {
     return Column(
       children: [
         IconButton.filledTonal(
@@ -512,20 +530,20 @@ class VideoPlayerScreen extends StatefulWidget {
 }
 
 class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
-  late VideoPlayerController _ctrl;
+  late VideoPlayerController ctrl;
   @override
   void initState() {
     super.initState();
-    _ctrl = VideoPlayerController.file(File(widget.path))
+    ctrl = VideoPlayerController.file(File(widget.path))
       ..initialize().then((_) {
         setState(() {});
-        _ctrl.play();
+        ctrl.play();
       });
   }
 
   @override
   void dispose() {
-    _ctrl.dispose();
+    ctrl.dispose();
     super.dispose();
   }
 
@@ -538,22 +556,22 @@ class _VideoPlayerScreenState extends State<VideoPlayerScreen> {
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Center(
-        child: _ctrl.value.isInitialized
+        child: ctrl.value.isInitialized
             ? AspectRatio(
-                aspectRatio: _ctrl.value.aspectRatio,
-                child: VideoPlayer(_ctrl),
+                aspectRatio: ctrl.value.aspectRatio,
+                child: VideoPlayer(ctrl),
               )
             : const CircularProgressIndicator(),
       ),
-      floatingActionButton: _ctrl.value.isInitialized
+      floatingActionButton: ctrl.value.isInitialized
           ? FloatingActionButton(
               onPressed: () {
                 setState(() {
-                  _ctrl.value.isPlaying ? _ctrl.pause() : _ctrl.play();
+                  ctrl.value.isPlaying ? ctrl.pause() : ctrl.play();
                 });
               },
               child: Icon(
-                _ctrl.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                ctrl.value.isPlaying ? Icons.pause : Icons.play_arrow,
               ),
             )
           : null,
